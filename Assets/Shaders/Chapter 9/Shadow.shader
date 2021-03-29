@@ -1,5 +1,4 @@
-﻿
-Shader "Chapter 9/ForwardRendering"
+﻿Shader "Chapter 9/Shadow"
 {
     Properties
     {
@@ -25,6 +24,7 @@ Shader "Chapter 9/ForwardRendering"
             #pragma multi_compile_fwdbase
 
             #include "Lighting.cginc"
+            #include "AutoLight.cginc"
 
             struct a2v
             {
@@ -41,6 +41,7 @@ Shader "Chapter 9/ForwardRendering"
                 float4 TtoW0 : TEXCOORD1;
                 float4 TtoW1 : TEXCOORD2;
                 float4 TtoW2 : TEXCOORD3;
+                SHADOW_COORDS(4)
             };
 
             sampler2D _MainTex;
@@ -56,6 +57,7 @@ Shader "Chapter 9/ForwardRendering"
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+                TRANSFER_SHADOW(o);
 
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 float3 worldNormal = mul(v.normal, (float3x3)unity_WorldToObject);
@@ -65,6 +67,7 @@ Shader "Chapter 9/ForwardRendering"
                 o.TtoW0 = float4(worldTangent.x, worldBinormal.x, worldNormal.x, worldPos.x);
                 o.TtoW1 = float4(worldTangent.y, worldBinormal.y, worldNormal.y, worldPos.y);
                 o.TtoW2 = float4(worldTangent.z, worldBinormal.z, worldNormal.z, worldPos.z);
+                
                 return o;
             }
 
@@ -89,7 +92,9 @@ Shader "Chapter 9/ForwardRendering"
 
                 fixed atten = 1.0;
 
-                return fixed4(ambient+(diffuse+specular)*atten, 1.0);
+                fixed shadow = SHADOW_ATTENUATION(i);
+
+                return fixed4(ambient+(diffuse+specular)*atten*shadow, 1.0);
             }
             ENDCG
         }

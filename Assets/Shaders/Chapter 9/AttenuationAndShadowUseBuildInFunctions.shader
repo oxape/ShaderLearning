@@ -1,5 +1,4 @@
-﻿
-Shader "Chapter 9/ForwardRendering"
+﻿Shader "Chapter 9/AttenuationAndShadowUseBuildInFunctions"
 {
     Properties
     {
@@ -25,6 +24,7 @@ Shader "Chapter 9/ForwardRendering"
             #pragma multi_compile_fwdbase
 
             #include "Lighting.cginc"
+            #include "AutoLight.cginc"
 
             struct a2v
             {
@@ -41,6 +41,7 @@ Shader "Chapter 9/ForwardRendering"
                 float4 TtoW0 : TEXCOORD1;
                 float4 TtoW1 : TEXCOORD2;
                 float4 TtoW2 : TEXCOORD3;
+                SHADOW_COORDS(4)
             };
 
             sampler2D _MainTex;
@@ -56,6 +57,7 @@ Shader "Chapter 9/ForwardRendering"
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+                TRANSFER_SHADOW(o);
 
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 float3 worldNormal = mul(v.normal, (float3x3)unity_WorldToObject);
@@ -65,6 +67,7 @@ Shader "Chapter 9/ForwardRendering"
                 o.TtoW0 = float4(worldTangent.x, worldBinormal.x, worldNormal.x, worldPos.x);
                 o.TtoW1 = float4(worldTangent.y, worldBinormal.y, worldNormal.y, worldPos.y);
                 o.TtoW2 = float4(worldTangent.z, worldBinormal.z, worldNormal.z, worldPos.z);
+                
                 return o;
             }
 
@@ -87,7 +90,7 @@ Shader "Chapter 9/ForwardRendering"
                 fixed3 halfDir = normalize(lightDir+viewDir);
                 fixed3 specular = _LightColor0*_Specular.rgb*pow(saturate(dot(bump, halfDir)), _Gloss);
 
-                fixed atten = 1.0;
+                UNITY_LIGHT_ATTENUATION(atten, i, worldPos);
 
                 return fixed4(ambient+(diffuse+specular)*atten, 1.0);
             }
@@ -103,7 +106,7 @@ Shader "Chapter 9/ForwardRendering"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile_fwdadd
+            #pragma multi_compile_fwdadd_fullshadows
 
             #include "Lighting.cginc"
             #include "AutoLight.cginc"
@@ -123,6 +126,7 @@ Shader "Chapter 9/ForwardRendering"
                 float4 TtoW0 : TEXCOORD1;
                 float4 TtoW1 : TEXCOORD2;
                 float4 TtoW2 : TEXCOORD3;
+                SHADOW_COORDS(4)
             };
 
             sampler2D _MainTex;
@@ -138,6 +142,7 @@ Shader "Chapter 9/ForwardRendering"
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+                TRANSFER_SHADOW(o);
 
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 float3 worldNormal = mul(v.normal, (float3x3)unity_WorldToObject);
@@ -168,12 +173,8 @@ Shader "Chapter 9/ForwardRendering"
                 fixed3 halfDir = normalize(lightDir+viewDir);
                 fixed3 specular = _LightColor0*_Specular.rgb*pow(saturate(dot(bump, halfDir)), _Gloss);
 
-                #ifdef USING_DIRECTIONAL_LIGHT
-                fixed atten = 1.0;
-                #else
-                float3 lightCoord = mul(unity_WorldToLight, float4(worldPos, 1)).xyz;
-                fixed atten = tex2D(_LightTexture0, dot(lightCoord, lightCoord).rr).UNITY_ATTEN_CHANNEL;
-                #endif
+                UNITY_LIGHT_ATTENUATION(atten, i, worldPos);
+
                 return fixed4((diffuse+specular)*atten, 1.0);
             }
             ENDCG
