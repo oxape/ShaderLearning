@@ -88,7 +88,7 @@
                 fixed3 diffuse = _LightColor0.rgb*albedo*saturate(dot(bump, lightDir));
 
                 fixed3 halfDir = normalize(lightDir+viewDir);
-                fixed3 specular = _LightColor0*_Specular.rgb*pow(saturate(dot(bump, halfDir)), _Gloss);
+                fixed3 specular = _LightColor0.rgb*_Specular.rgb*pow(saturate(dot(bump, halfDir)), _Gloss);
 
                 UNITY_LIGHT_ATTENUATION(atten, i, worldPos);
 
