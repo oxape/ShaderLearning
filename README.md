@@ -1,3 +1,3 @@
 # ShaderLearning
 
-Core for learning Unity Shader Book, Unity 2019.4.19f1
+Core for learning Unity Shaders Book, Unity 2019.4.19f1
